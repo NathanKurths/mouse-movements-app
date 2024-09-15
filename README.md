@@ -1,7 +1,7 @@
 # mouse-movements-app
 Application to facilitate routine tasks.
 
-#Files
+# Files
 The python file is for curious people who want to see what the code looks like, and the executable for those who need to use it.
 
 # Inspiration
