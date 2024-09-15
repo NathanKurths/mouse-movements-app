@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 import pynput.mouse
 import pynput.keyboard
 import time
+import os
 import threading
 
 # Lista para armazenar os movimentos
@@ -46,11 +47,15 @@ def stop_recording():
     mouse_listener.stop()  # Para o ouvinte do mouse
 
     # Salva os movimentos em um arquivo
-    with open('movimentos.txt', 'w') as f:
-        for movement in movements:
-            f.write(f'{movement}\n')
-    
-    status_label.config(text="Gravação parada.")
+    file_name = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")], title="Salvar gravação")
+    if file_name:
+        with open(file_name, 'w') as f:
+            for movement in movements:
+                f.write(f'{movement}\n')
+        status_label.config(text=f"Gravação salva em {file_name}.")
+    else:
+        status_label.config(text="Gravação cancelada.")
+
     start_button.config(state=tk.NORMAL)
     stop_button.config(state=tk.DISABLED)
     play_button.config(state=tk.NORMAL)
@@ -61,6 +66,10 @@ def start_playback():
         messagebox.showinfo("Info", "Já está reproduzindo.")
         return
     
+    file_name = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")], title="Abrir gravação")
+    if not file_name:
+        return
+    
     playing = True
     stop_movement = False
     start_button.config(state=tk.DISABLED)
@@ -69,7 +78,7 @@ def start_playback():
     stop_play_button.config(state=tk.NORMAL)
     
     # Executa a reprodução em uma thread separada
-    threading.Thread(target=playback).start()
+    threading.Thread(target=lambda: playback(file_name)).start()
 
 def stop_playback():
     global playing
@@ -79,13 +88,13 @@ def stop_playback():
     play_button.config(state=tk.NORMAL)
     stop_play_button.config(state=tk.DISABLED)
 
-def playback():
+def playback(file_name):
     global playing, stop_movement
     mouse = pynput.mouse.Controller()
     keyboard_listener = pynput.keyboard.Listener(on_press=on_press)
     keyboard_listener.start()
     
-    with open('movimentos.txt', 'r') as f:
+    with open(file_name, 'r') as f:
         movements = [eval(line.strip()) for line in f.readlines()]
 
     start_time = movements[0][3]
@@ -135,7 +144,7 @@ start_button.pack(pady=10)
 stop_button = tk.Button(root, text="Parar Gravação", command=stop_recording, state=tk.DISABLED)
 stop_button.pack(pady=10)
 
-play_button = tk.Button(root, text="Iniciar Reprodução", command=start_playback, state=tk.DISABLED)
+play_button = tk.Button(root, text="Iniciar Reprodução", command=start_playback, state=tk.NORMAL)
 play_button.pack(pady=10)
 
 stop_play_button = tk.Button(root, text="Parar Reprodução", command=stop_playback, state=tk.DISABLED)
